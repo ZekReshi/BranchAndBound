@@ -7,11 +7,50 @@ using System.Xml.Linq;
 
 namespace BranchAndBound.Tasks
 {
-    public class QAPTask(int[,] flows, int[,] distances, int[] assignedLocations) : IBnBTask
+    public class QAPTask : IBnBTask
     {
-        public List<IBnBTask> Branch(IBnBTask? best)
+        readonly int[,] flows;
+        readonly int[,] distances;
+        readonly int[] assignedLocations;
+
+        public QAPTask(int size)
         {
-            List<IBnBTask> children = [];
+            Random random = new();
+            flows = new int[size, size];
+            for (int i = 0; i < flows.GetLength(0); i++)
+            {
+                for (int j = 0; j < flows.GetLength(1); j++)
+                {
+                    flows[i, j] = random.Next(8) + 1;
+                }
+            }
+            distances = new int[size, size];
+            for (int i = 0; i < distances.GetLength(0); i++)
+            {
+                for (int j = 0; j < distances.GetLength(1); j++)
+                {
+                    distances[i, j] = random.Next(8) + 1;
+                }
+            }
+            assignedLocations = [];
+        }
+
+        public QAPTask(int[,] flows, int[,] distances)
+        {
+            this.flows = flows;
+            this.distances = distances;
+            this.assignedLocations = [];
+        }
+
+        private QAPTask(int[,] flows, int[,] distances, int[] assignedLocations)
+        {
+            this.flows = flows;
+            this.distances = distances;
+            this.assignedLocations = assignedLocations;
+        }
+
+        public IEnumerable<IBnBTask> Branch(IBnBTask? best)
+        {
             if (assignedLocations.Length < flows.GetLength(0))
             {
                 for (int i = 0; i < flows.GetLength(0); i++)
@@ -21,13 +60,12 @@ namespace BranchAndBound.Tasks
                     Array.Copy(assignedLocations, newAssignedLocations, assignedLocations.Length);
                     newAssignedLocations[assignedLocations.Length] = i;
                     QAPTask newTask = new(flows, distances, newAssignedLocations);
-                    if (best == null || newTask.CompareTo(best) > 0)
+                    if (best == null || newTask > best)
                     {
-                        children.Add(newTask);
+                        yield return newTask;
                     }
                 }
             }
-            return children;
         }
 
         public int FlowDistance()
@@ -55,6 +93,28 @@ namespace BranchAndBound.Tasks
         public bool IsLeaf()
         {
             return assignedLocations.Length == flows.GetLength(0);
+        }
+
+        public void PrintProblem()
+        {
+            Console.WriteLine("Flows:");
+            for (int i = 0; i < flows.GetLength(0); i++)
+            {
+                for (int j = 0; j < flows.GetLength(1); j++)
+                {
+                    Console.Write(flows[i, j] + "\t");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine("Distances:");
+            for (int i = 0; i < distances.GetLength(0); i++)
+            {
+                for (int j = 0; j < distances.GetLength(1); j++)
+                {
+                    Console.Write(distances[i, j] + "\t");
+                }
+                Console.WriteLine();
+            }
         }
 
         public override string ToString()

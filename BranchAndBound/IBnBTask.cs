@@ -8,7 +8,13 @@ namespace BranchAndBound
 {
     public interface IBnBTask : IComparable<IBnBTask>
     {
-        public List<IBnBTask> Branch(IBnBTask? best);
+        public IEnumerable<IBnBTask> Branch(IBnBTask? best);
         public bool IsLeaf();
+        void PrintProblem();
+
+        public static bool operator <(IBnBTask left, IBnBTask right) => left.CompareTo(right) < 0;
+        public static bool operator >(IBnBTask left, IBnBTask right) => left.CompareTo(right) > 0;
+        public static bool operator <=(IBnBTask left, IBnBTask right) => left.CompareTo(right) <= 0;
+        public static bool operator >=(IBnBTask left, IBnBTask right) => left.CompareTo(right) >= 0;
     }
 }

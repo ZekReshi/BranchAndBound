@@ -6,11 +6,39 @@ using System.Threading.Tasks;
 
 namespace BranchAndBound.Tasks
 {
-    public class TSPTask(int[,] distances, int[] nodes) : IBnBTask
+    public class TSPTask : IBnBTask
     {
-        public List<IBnBTask> Branch(IBnBTask? best)
+        readonly int[,] distances;
+        readonly int[] nodes;
+
+        public TSPTask(int size)
         {
-            List<IBnBTask> children = [];
+            Random random = new();
+            distances = new int[size, size];
+            for (int i = 0; i < distances.GetLength(0); i++)
+            {
+                for (int j = 0; j < distances.GetLength(1); j++)
+                {
+                    distances[i, j] = random.Next(8) + 1;
+                }
+            }
+            nodes = [0];
+        }
+
+        public TSPTask(int[,] distances)
+        {
+            this.distances = distances;
+            this.nodes = [0];
+        }
+
+        private TSPTask(int[,] distances, int[] nodes)
+        {
+            this.distances = distances;
+            this.nodes = nodes;
+        }
+
+        public IEnumerable<IBnBTask> Branch(IBnBTask? best)
+        {
             if (nodes.Length == distances.GetLength(0))
             {
                 if (distances[nodes.Last(), 0] != 0)
@@ -18,23 +46,24 @@ namespace BranchAndBound.Tasks
                     int[] newNodes = new int[nodes.Length + 1];
                     Array.Copy(nodes, newNodes, nodes.Length);
                     newNodes[nodes.Length] = 0;
-                    children.Add(new TSPTask(distances, newNodes));
+                    yield return new TSPTask(distances, newNodes);
                 }
-                return children;
             }
-            for (int i = 1; i < distances.GetLength(0); i++)
+            else
             {
-                if (distances[nodes.Last(), i] == 0 || nodes.Contains(i)) continue;
-                int[] newNodes = new int[nodes.Length + 1];
-                Array.Copy(nodes, newNodes, nodes.Length);
-                newNodes[nodes.Length] = i;
-                TSPTask newTask = new(distances, newNodes);
-                if (best == null || newTask.CompareTo(best) > 0)
+                for (int i = 1; i < distances.GetLength(0); i++)
                 {
-                    children.Add(newTask);
+                    if (distances[nodes.Last(), i] == 0 || nodes.Contains(i)) continue;
+                    int[] newNodes = new int[nodes.Length + 1];
+                    Array.Copy(nodes, newNodes, nodes.Length);
+                    newNodes[nodes.Length] = i;
+                    TSPTask newTask = new(distances, newNodes);
+                    if (best == null || newTask > best)
+                    {
+                        yield return newTask;
+                    }
                 }
             }
-            return children;
         }
 
         public int Distance()
@@ -59,6 +88,19 @@ namespace BranchAndBound.Tasks
         public bool IsLeaf()
         {
             return nodes.Length == distances.GetLength(0) + 1;
+        }
+
+        public void PrintProblem()
+        {
+            Console.WriteLine("Distances:");
+            for (int i = 0; i < distances.GetLength(0); i++)
+            {
+                for (int j = 0; j < distances.GetLength(1); j++)
+                {
+                    Console.Write(distances[i, j] + "\t");
+                }
+                Console.WriteLine();
+            }
         }
 
         public override string ToString()

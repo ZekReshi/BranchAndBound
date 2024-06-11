@@ -8,32 +8,32 @@ namespace BranchAndBound
 {
     public class BnB
     {
-        private readonly int nThreads;
+        private readonly int nTasks;
         private Queue<IBnBTask> Q { get; init; }
-        private IBnBTask? GlobalBest {  get; set; }
+        public IBnBTask? GlobalBest { get; private set; }
         private object GlobalBestLock { get; init; }
 
-        public BnB(IBnBTask rootTask, int nThreads)
+        public BnB(IBnBTask rootTask, int nThreads = 8)
         {
             Q = new Queue<IBnBTask>();
             Q.Enqueue(rootTask);
-            this.nThreads = nThreads;
+            nTasks = nThreads;
             GlobalBest = null;
             GlobalBestLock = new object();
         }
 
-        public void Run()
+        public async Task Run()
         {
-            List<Task> tasks = [];
-            for (int thread = 0; thread < nThreads; thread++)
+            Task[] tasks = new Task[nTasks];
+            for (int i = 0; i < nTasks; i++)
             {
-                tasks.Add(new Task(Execute));
+                tasks[i] = new Task(Execute);
+                tasks[i].Start();
             }
-
-            tasks.ForEach(t => t.Start());
-            tasks.ForEach(t => t.Wait());
-
-            Console.WriteLine(GlobalBest);
+            for (int i = 0; i < nTasks; i++)
+            {
+                await tasks[i];
+            }
         }
 
         public void Execute()
@@ -51,7 +51,10 @@ namespace BranchAndBound
                         if (Q.Count == 1 && !Q.Peek().IsLeaf())
                         {
                             IBnBTask lastTask = Q.Dequeue();
-                            lastTask.Branch(personalBest).ForEach(Q.Enqueue);
+                            foreach (IBnBTask newTask in lastTask.Branch(personalBest))
+                            {
+                                Q.Enqueue(newTask);
+                            }
                         }
                         if (Q.Count == 0)
                         {
@@ -63,14 +66,17 @@ namespace BranchAndBound
                 IBnBTask task = stack.Pop();
                 if (!task.IsLeaf())
                 {
-                    task.Branch(personalBest).ForEach(stack.Push);
+                    foreach (IBnBTask newTask in task.Branch(personalBest))
+                    {
+                        stack.Push(newTask);
+                    }
                 }
-                else if (personalBest == null || task.CompareTo(personalBest) > 0)
+                else if (personalBest == null || task > personalBest)
                 {
                     lock(GlobalBestLock)
                     {
                         personalBest = GlobalBest;
-                        if (GlobalBest == null || task.CompareTo(GlobalBest) > 0)
+                        if (GlobalBest == null || task > GlobalBest)
                         {
                             GlobalBest = task;
                         }
