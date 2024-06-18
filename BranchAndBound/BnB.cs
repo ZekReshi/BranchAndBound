@@ -25,24 +25,33 @@ namespace BranchAndBound
         public async Task Run()
         {
             Task[] tasks = new Task[nTasks];
+            CancellationTokenSource cancellationTokenSource = new();
+            Progress<IBnBTask> progress = new(task => Console.Write(task.ToString() + '\r'));
             for (int i = 0; i < nTasks; i++)
             {
-                tasks[i] = new Task(Execute);
+                tasks[i] = new Task(() => Execute(cancellationTokenSource.Token, progress));
                 tasks[i].Start();
             }
-            for (int i = 0; i < nTasks; i++)
+            while (true)
             {
-                await tasks[i];
+                if (Console.KeyAvailable) break;
+                int completed = 0;
+                foreach (Task task in tasks)
+                    if (task.IsCompleted)
+                        completed++;
+                if (completed == tasks.Length) break;
+                Thread.Sleep(100);
             }
+            cancellationTokenSource.Cancel();
         }
 
-        public void Execute()
+        public void Execute(CancellationToken cancellationToken, IProgress<IBnBTask> progress)
         {
             Stack<IBnBTask> stack = new();
 
             IBnBTask? personalBest = null;
 
-            do
+            while (!cancellationToken.IsCancellationRequested)
             {
                 if (stack.Count == 0)
                 {
@@ -79,10 +88,11 @@ namespace BranchAndBound
                         if (GlobalBest == null || task > GlobalBest)
                         {
                             GlobalBest = task;
+                            progress.Report(task);
                         }
                     }
                 }
-            } while (true);
+            }
         }
     }
 }

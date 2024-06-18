@@ -94,7 +94,7 @@ namespace BranchAndBound.Tasks
             {
                 for (int j = 0; j < tasks.GetLength(1); j++)
                 {
-                    Console.Write(tasks[i, j] + "\t");
+                    Console.Write(tasks[i, j] + " ");
                 }
                 Console.WriteLine();
             }

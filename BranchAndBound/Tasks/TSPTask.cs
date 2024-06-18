@@ -97,7 +97,7 @@ namespace BranchAndBound.Tasks
             {
                 for (int j = 0; j < distances.GetLength(1); j++)
                 {
-                    Console.Write(distances[i, j] + "\t");
+                    Console.Write(distances[i, j] + " ");
                 }
                 Console.WriteLine();
             }

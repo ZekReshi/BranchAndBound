@@ -10,8 +10,7 @@ do
     Console.WriteLine("-1 - Run Example Problems");
     Console.Write("Choose a problem to solve (exit with 0): ");
     string? input = Console.ReadLine();
-    if (input == null) continue;
-    if (!int.TryParse(input, out int problem) || problem < -1 || problem > 3) continue;
+    if (input == null || !int.TryParse(input, out int problem) || problem < -1 || problem > 3) continue;
     if (problem == 0) break;
     if (problem > 0)
     {
@@ -19,24 +18,24 @@ do
         {
             Console.Write("Choose a problem size (go back with 0): ");
             input = Console.ReadLine();
-            if (input == null) continue;
-            if (!int.TryParse(input, out int size) || size < 0) continue;
+            if (input == null || !int.TryParse(input, out int size) || size < 0) continue;
             if (size == 0) break;
             do
             {
-                Console.Write("Choose a number of threads to be used (go back with 0, benchmark different numbers with -1): ");
+                Console.Write("Choose a number of threads to be used (go back with 0, benchmark different # of threads with -1): ");
                 input = Console.ReadLine();
-                if (input == null) continue;
-                if (!int.TryParse(input, out int nThreads) || nThreads < -1) continue;
+                if (input == null || !int.TryParse(input, out int nThreads) || nThreads < -1) continue;
                 if (nThreads == 0) break;
                 if (nThreads == -1)
                 {
                     List<BnBBenchmarkResult> results = [];
-                    for (int i = 1; i <= 8; i *= 2)
+                    await Console.Out.WriteLineAsync("Press any key to cancel...");
+                    for (int i = 1; i <= 8 && !Console.KeyAvailable; i *= 2)
                     {
                         Console.WriteLine($"Benchmarking for {i} thread{(i == 1 ? "" : "s")}");
-                        for (int j = 0; j < 5; j++)
+                        for (int j = 1; j <= 5 && !Console.KeyAvailable; j++)
                         {
+                            Console.WriteLine($"{j}/5");
                             IBnBTask task = problem switch
                             {
                                 1 => new TSPTask(size),
@@ -47,12 +46,20 @@ do
                             BnB bnb = new(task, i);
                             DateTime dateTime = DateTime.Now;
                             await bnb.Run();
+                            Console.WriteLine(bnb.GlobalBest);
                             TimeSpan time = DateTime.Now - dateTime;
                             results.Add(new BnBBenchmarkResult(i, time.TotalSeconds));
                         }
                     }
-                    List<BnBBenchmarkResult> averagedResults = BnBBenchmarkResult.GroupAndAverage(results);
-                    averagedResults.ForEach(res => Console.WriteLine($"{res.NTasks}: {res.Time} seconds"));
+                    if (Console.KeyAvailable)
+                    {
+                        while (Console.KeyAvailable) Console.ReadKey();
+                    }
+                    else
+                    {
+                        List<BnBBenchmarkResult> averagedResults = BnBBenchmarkResult.GroupAndAverage(results);
+                        averagedResults.ForEach(res => Console.WriteLine($"{res.NTasks}: {res.Time} seconds"));
+                    }
                 }
                 else
                 {
@@ -65,7 +72,9 @@ do
                     };
                     task.PrintProblem();
                     BnB bnb = new(task, nThreads);
+                    await Console.Out.WriteLineAsync("Press any key to cancel...");
                     await bnb.Run();
+                    while (Console.KeyAvailable) Console.ReadKey();
                     Console.WriteLine(bnb.GlobalBest);
                 }
             } while (true);
