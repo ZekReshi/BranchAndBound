@@ -32,15 +32,8 @@ namespace BranchAndBound
                 tasks[i] = new Task(() => Execute(cancellationTokenSource.Token, progress));
                 tasks[i].Start();
             }
-            while (!Console.KeyAvailable)
-            {
-                int completed = 0;
-                foreach (Task task in tasks)
-                    if (task.IsCompleted)
-                        completed++;
-                if (completed == tasks.Length) break;
-                Thread.Sleep(100);
-            }
+            Task allTasks = Task.WhenAll(tasks);
+            while (!Console.KeyAvailable && !allTasks.IsCompleted) Thread.Sleep(100);
             cancellationTokenSource.Cancel();
         }
 
