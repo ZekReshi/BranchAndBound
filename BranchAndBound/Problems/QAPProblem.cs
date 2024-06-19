@@ -5,15 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace BranchAndBound.Tasks
+namespace BranchAndBound.Problems
 {
-    public class QAPTask : IBnBTask
+    public class QAPProblem : IBnBProblem
     {
         readonly int[,] flows;
         readonly int[,] distances;
         readonly int[] assignedLocations;
 
-        public QAPTask(int size)
+        public QAPProblem(int size)
         {
             Random random = new();
             flows = new int[size, size];
@@ -35,21 +35,21 @@ namespace BranchAndBound.Tasks
             assignedLocations = [];
         }
 
-        public QAPTask(int[,] flows, int[,] distances)
+        public QAPProblem(int[,] flows, int[,] distances)
         {
             this.flows = flows;
             this.distances = distances;
             this.assignedLocations = [];
         }
 
-        private QAPTask(int[,] flows, int[,] distances, int[] assignedLocations)
+        private QAPProblem(int[,] flows, int[,] distances, int[] assignedLocations)
         {
             this.flows = flows;
             this.distances = distances;
             this.assignedLocations = assignedLocations;
         }
 
-        public IEnumerable<IBnBTask> Branch(IBnBTask? best)
+        public IEnumerable<IBnBProblem> Branch(IBnBProblem? best)
         {
             if (assignedLocations.Length < flows.GetLength(0))
             {
@@ -59,10 +59,10 @@ namespace BranchAndBound.Tasks
                     int[] newAssignedLocations = new int[assignedLocations.Length + 1];
                     Array.Copy(assignedLocations, newAssignedLocations, assignedLocations.Length);
                     newAssignedLocations[assignedLocations.Length] = i;
-                    QAPTask newTask = new(flows, distances, newAssignedLocations);
-                    if (best == null || newTask > best)
+                    QAPProblem newProblem = new(flows, distances, newAssignedLocations);
+                    if (best == null || newProblem > best)
                     {
-                        yield return newTask;
+                        yield return newProblem;
                     }
                 }
             }
@@ -81,13 +81,13 @@ namespace BranchAndBound.Tasks
             return flowDistances;
         }
 
-        public int CompareTo(IBnBTask? other)
+        public int CompareTo(IBnBProblem? other)
         {
-            if (other is QAPTask task)
+            if (other is QAPProblem problem)
             {
-                return -FlowDistance().CompareTo(task.FlowDistance());
+                return -FlowDistance().CompareTo(problem.FlowDistance());
             }
-            throw new ArgumentException("Cannot compare two different IBnBTasks");
+            throw new ArgumentException("Cannot compare two different IBnBProblems");
         }
 
         public bool IsLeaf()

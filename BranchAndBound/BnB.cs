@@ -9,14 +9,14 @@ namespace BranchAndBound
     public class BnB
     {
         private readonly int nTasks;
-        private Queue<IBnBTask> Q { get; init; }
-        public IBnBTask? GlobalBest { get; private set; }
+        private Queue<IBnBProblem> Q { get; init; }
+        public IBnBProblem? GlobalBest { get; private set; }
         private object GlobalBestLock { get; init; }
 
-        public BnB(IBnBTask rootTask, int nThreads = 8)
+        public BnB(IBnBProblem rootProblem, int nThreads = 8)
         {
-            Q = new Queue<IBnBTask>();
-            Q.Enqueue(rootTask);
+            Q = new Queue<IBnBProblem>();
+            Q.Enqueue(rootProblem);
             nTasks = nThreads;
             GlobalBest = null;
             GlobalBestLock = new object();
@@ -26,15 +26,14 @@ namespace BranchAndBound
         {
             Task[] tasks = new Task[nTasks];
             CancellationTokenSource cancellationTokenSource = new();
-            Progress<IBnBTask> progress = new(task => Console.Write(task.ToString() + '\r'));
+            Progress<IBnBProblem> progress = new(problem => Console.Write(problem.ToString() + '\r'));
             for (int i = 0; i < nTasks; i++)
             {
                 tasks[i] = new Task(() => Execute(cancellationTokenSource.Token, progress));
                 tasks[i].Start();
             }
-            while (true)
+            while (!Console.KeyAvailable)
             {
-                if (Console.KeyAvailable) break;
                 int completed = 0;
                 foreach (Task task in tasks)
                     if (task.IsCompleted)
@@ -45,11 +44,11 @@ namespace BranchAndBound
             cancellationTokenSource.Cancel();
         }
 
-        public void Execute(CancellationToken cancellationToken, IProgress<IBnBTask> progress)
+        public void Execute(CancellationToken cancellationToken, IProgress<IBnBProblem> progress)
         {
-            Stack<IBnBTask> stack = new();
+            Stack<IBnBProblem> stack = new();
 
-            IBnBTask? personalBest = null;
+            IBnBProblem? personalBest = null;
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -59,10 +58,10 @@ namespace BranchAndBound
                     {
                         if (Q.Count == 1 && !Q.Peek().IsLeaf())
                         {
-                            IBnBTask lastTask = Q.Dequeue();
-                            foreach (IBnBTask newTask in lastTask.Branch(personalBest))
+                            IBnBProblem lastProblem = Q.Dequeue();
+                            foreach (IBnBProblem newProblem in lastProblem.Branch(personalBest))
                             {
-                                Q.Enqueue(newTask);
+                                Q.Enqueue(newProblem);
                             }
                         }
                         if (Q.Count == 0)
@@ -72,23 +71,23 @@ namespace BranchAndBound
                         stack.Push(Q.Dequeue());
                     }
                 }
-                IBnBTask task = stack.Pop();
-                if (!task.IsLeaf())
+                IBnBProblem problem = stack.Pop();
+                if (!problem.IsLeaf())
                 {
-                    foreach (IBnBTask newTask in task.Branch(personalBest))
+                    foreach (IBnBProblem newProblem in problem.Branch(personalBest))
                     {
-                        stack.Push(newTask);
+                        stack.Push(newProblem);
                     }
                 }
-                else if (personalBest == null || task > personalBest)
+                else if (personalBest == null || problem > personalBest)
                 {
                     lock(GlobalBestLock)
                     {
                         personalBest = GlobalBest;
-                        if (GlobalBest == null || task > GlobalBest)
+                        if (GlobalBest == null || problem > GlobalBest)
                         {
-                            GlobalBest = task;
-                            progress.Report(task);
+                            GlobalBest = problem;
+                            progress.Report(problem);
                         }
                     }
                 }

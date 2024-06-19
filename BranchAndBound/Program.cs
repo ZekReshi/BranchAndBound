@@ -1,5 +1,5 @@
 ﻿using BranchAndBound;
-using BranchAndBound.Tasks;
+using BranchAndBound.Problems;
 
 do
 {
@@ -10,9 +10,9 @@ do
     Console.WriteLine("-1 - Run Example Problems");
     Console.Write("Choose a problem to solve (exit with 0): ");
     string? input = Console.ReadLine();
-    if (input == null || !int.TryParse(input, out int problem) || problem < -1 || problem > 3) continue;
-    if (problem == 0) break;
-    if (problem > 0)
+    if (input == null || !int.TryParse(input, out int problemNo) || problemNo < -1 || problemNo > 3) continue;
+    if (problemNo == 0) break;
+    if (problemNo > 0)
     {
         do
         {
@@ -36,14 +36,14 @@ do
                         for (int j = 1; j <= 5 && !Console.KeyAvailable; j++)
                         {
                             Console.WriteLine($"{j}/5");
-                            IBnBTask task = problem switch
+                            IBnBProblem problem = problemNo switch
                             {
-                                1 => new TSPTask(size),
-                                2 => new QAPTask(size),
-                                3 => new FSSTask(size),
-                                _ => throw new ArgumentException($"Problem {problem} does not exist. This should not happen")
+                                1 => new TSPProblem(size),
+                                2 => new QAPProblem(size),
+                                3 => new FSSProblem(size),
+                                _ => throw new ArgumentException($"Problem {problemNo} does not exist. This should not happen")
                             };
-                            BnB bnb = new(task, i);
+                            BnB bnb = new(problem, i);
                             DateTime dateTime = DateTime.Now;
                             await bnb.Run();
                             Console.WriteLine(bnb.GlobalBest);
@@ -63,15 +63,15 @@ do
                 }
                 else
                 {
-                    IBnBTask task = problem switch
+                    IBnBProblem problem = problemNo switch
                     {
-                        1 => new TSPTask(size),
-                        2 => new QAPTask(size),
-                        3 => new FSSTask(size),
-                        _ => throw new ArgumentException($"Problem {problem} does not exist. This should not happen")
+                        1 => new TSPProblem(size),
+                        2 => new QAPProblem(size),
+                        3 => new FSSProblem(size),
+                        _ => throw new ArgumentException($"Problem {problemNo} does not exist. This should not happen")
                     };
-                    task.PrintProblem();
-                    BnB bnb = new(task, nThreads);
+                    problem.PrintProblem();
+                    BnB bnb = new(problem, nThreads);
                     await Console.Out.WriteLineAsync("Press any key to cancel...");
                     await bnb.Run();
                     while (Console.KeyAvailable) Console.ReadKey();
@@ -100,7 +100,7 @@ do
             { 0, 9, 5, 4, 0, 3, 4, 0, 6, 0, 0, 9, 7, 9, 9 },
             { 3, 2, 1, 3, 4, 6, 6, 7, 0, 0, 6, 0, 9, 0, 2 }
         };
-        BnB testBnb = new(new TSPTask(tspDistances));
+        BnB testBnb = new(new TSPProblem(tspDistances));
         await testBnb.Run();
         Console.WriteLine(testBnb.GlobalBest);
 
@@ -116,7 +116,7 @@ do
             { 100, 0, 65 },
             { 30, 65, 0 }
         };
-        testBnb = new(new QAPTask(qapFlows, qapDistances));
+        testBnb = new(new QAPProblem(qapFlows, qapDistances));
         await testBnb.Run();
         Console.WriteLine(testBnb.GlobalBest);
 
@@ -127,7 +127,7 @@ do
             { 2, 3 },
             { 5, 6 }
         };
-        testBnb = new(new FSSTask(fssTasks));
+        testBnb = new(new FSSProblem(fssTasks));
         await testBnb.Run();
         Console.WriteLine(testBnb.GlobalBest);
     }

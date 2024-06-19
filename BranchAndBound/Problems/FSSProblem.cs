@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using static System.Reflection.Metadata.BlobBuilder;
 
-namespace BranchAndBound.Tasks
+namespace BranchAndBound.Problems
 {
-    public class FSSTask : IBnBTask
+    public class FSSProblem : IBnBProblem
     {
         readonly int[,] tasks;
         readonly int[] schedule;
 
-        public FSSTask(int size)
+        public FSSProblem(int size)
         {
             Random random = new();
             tasks = new int[size, size];
@@ -27,19 +27,19 @@ namespace BranchAndBound.Tasks
             schedule = [];
         }
 
-        public FSSTask(int[,] tasks)
+        public FSSProblem(int[,] tasks)
         {
             this.tasks = tasks;
             this.schedule = [];
         }
 
-        private FSSTask(int[,] tasks, int[] schedule)
+        private FSSProblem(int[,] tasks, int[] schedule)
         {
             this.tasks = tasks;
             this.schedule = schedule;
         }
 
-        public IEnumerable<IBnBTask> Branch(IBnBTask? best)
+        public IEnumerable<IBnBProblem> Branch(IBnBProblem? best)
         {
             if (schedule.Length < tasks.GetLength(0))
             {
@@ -49,10 +49,10 @@ namespace BranchAndBound.Tasks
                     int[] newSchedule = new int[schedule.Length + 1];
                     Array.Copy(schedule, newSchedule, schedule.Length);
                     newSchedule[schedule.Length] = i;
-                    FSSTask newTask = new(tasks, newSchedule);
-                    if (best == null || newTask > best)
+                    FSSProblem newProblem = new(tasks, newSchedule);
+                    if (best == null || newProblem > best)
                     {
-                        yield return newTask;
+                        yield return newProblem;
                     }
                 }
             }
@@ -73,13 +73,13 @@ namespace BranchAndBound.Tasks
             return times[schedule.Length - 1];
         }
 
-        public int CompareTo(IBnBTask? other)
+        public int CompareTo(IBnBProblem? other)
         {
-            if (other is FSSTask task)
+            if (other is FSSProblem problem)
             {
-                return -Time().CompareTo(task.Time());
+                return -Time().CompareTo(problem.Time());
             }
-            throw new ArgumentException("Cannot compare two different IBnBTasks");
+            throw new ArgumentException("Cannot compare two different IBnBProblems");
         }
 
         public bool IsLeaf()
