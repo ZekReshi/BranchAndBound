@@ -27,14 +27,12 @@ namespace BranchAndBound
             Task[] tasks = new Task[nTasks];
             CancellationTokenSource cancellationTokenSource = new();
             Progress<IBnBProblem> progress = new(problem => Console.Write(problem.ToString() + '\r'));
-            for (int i = 0; i < nTasks; i++)
-            {
-                tasks[i] = new Task(() => Execute(cancellationTokenSource.Token, progress));
-                tasks[i].Start();
-            }
+            for (int i = 0; i < nTasks; i++) 
+                tasks[i] = Task.Run(() => Execute(cancellationTokenSource.Token, progress));
             Task allTasks = Task.WhenAll(tasks);
             while (!Console.KeyAvailable && !allTasks.IsCompleted) Thread.Sleep(100);
             cancellationTokenSource.Cancel();
+            Console.ReadLine();
         }
 
         public void Execute(CancellationToken cancellationToken, IProgress<IBnBProblem> progress)
